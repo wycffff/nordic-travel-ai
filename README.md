@@ -85,7 +85,7 @@ User Input → Flask Backend → Ollama (Local LLM) → Streaming Response → F
 ### 1. Clone the repository
 
 ```bash
-git clone https://github.com/your-username/nordic-travel-ai.git
+git clone https://github.com/wycffff/nordic-travel-ai.git
 cd nordic-travel-ai
 ```
 
