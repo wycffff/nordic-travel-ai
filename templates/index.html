@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Data Bridge - Explore the Nordic North</title>
+
+    <style>
+        :root {
+            --bg-color: #050b14;
+            --text-main: #ffffff;
+            --text-muted: #a0aec0;
+            --aurora-green: #00ffa3;
+            --ice-blue: #00b8ff;
+            --glass-bg: rgba(255, 255, 255, 0.05);
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: var(--font-family);
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            overflow-x: hidden;
+            line-height: 1.6;
+        }
+
+        .ambient-light {
+            position: fixed;
+            top: -20%;
+            left: -10%;
+            width: 50vw;
+            height: 50vw;
+            background: radial-gradient(circle, rgba(0,255,163,0.15) 0%, rgba(0,0,0,0) 70%);
+            border-radius: 50%;
+            filter: blur(80px);
+            z-index: -1;
+            animation: float 10s infinite alternate;
+        }
+
+        .ambient-light-2 {
+            position: fixed;
+            bottom: -20%;
+            right: -10%;
+            width: 60vw;
+            height: 60vw;
+            background: radial-gradient(circle, rgba(0,184,255,0.10) 0%, rgba(0,0,0,0) 70%);
+            border-radius: 50%;
+            filter: blur(100px);
+            z-index: -1;
+            animation: float 15s infinite alternate-reverse;
+        }
+
+        @keyframes float {
+            0% { transform: translate(0, 0); }
+            100% { transform: translate(50px, 50px); }
+        }
+
+        nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 5%;
+            background: rgba(5, 11, 20, 0.6);
+            backdrop-filter: blur(10px);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            border-bottom: 1px solid var(--glass-border);
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: bold;
+            background: linear-gradient(90deg, var(--aurora-green), var(--ice-blue));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .nav-links a {
+            color: var(--text-main);
+            text-decoration: none;
+            margin-left: 30px;
+            transition: color 0.3s ease;
+        }
+
+        .nav-links a:hover {
+            color: var(--aurora-green);
+        }
+
+        .hero {
+            min-height: 78vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 0 20px;
+            background:
+                linear-gradient(to bottom, rgba(5,11,20,0.25), var(--bg-color)),
+                url('https://images.unsplash.com/photo-1521127474489-d524412fd439?q=80&w=2000&auto=format&fit=crop') center/cover no-repeat;
+        }
+
+        .hero h1 {
+            font-size: 4rem;
+            margin-bottom: 20px;
+            letter-spacing: 2px;
+            text-shadow: 0 4px 15px rgba(0,0,0,0.5);
+        }
+
+        .hero p {
+            font-size: 1.15rem;
+            color: var(--text-muted);
+            max-width: 760px;
+            margin-bottom: 30px;
+        }
+
+        .hero-badges {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .hero-badge {
+            padding: 8px 14px;
+            border-radius: 999px;
+            background: rgba(255,255,255,0.06);
+            border: 1px solid var(--glass-border);
+            color: var(--text-muted);
+            font-size: 0.92rem;
+        }
+
+        .ai-container {
+            width: 92%;
+            max-width: 920px;
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 30px;
+            backdrop-filter: blur(15px);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+            margin: -70px auto 50px auto;
+            position: relative;
+            z-index: 10;
+        }
+
+        .ai-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 18px;
+            justify-content: space-between;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .ai-header-left {
+            display: flex;
+            align-items: center;
+        }
+
+        .ai-status-dot {
+            width: 10px;
+            height: 10px;
+            background-color: var(--aurora-green);
+            border-radius: 50%;
+            margin-right: 10px;
+            box-shadow: 0 0 10px var(--aurora-green);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(0, 255, 163, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(0, 255, 163, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(0, 255, 163, 0); }
+        }
+
+        .ai-subtitle {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+        }
+
+        .ai-input-wrapper {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 14px;
+            flex-wrap: wrap;
+        }
+
+        .ai-input {
+            flex: 1;
+            min-width: 260px;
+            background: rgba(0, 0, 0, 0.2);
+            border: 1px solid var(--glass-border);
+            padding: 15px 20px;
+            border-radius: 10px;
+            color: white;
+            font-size: 1rem;
+            outline: none;
+            transition: border 0.3s ease;
+        }
+
+        .ai-input:focus {
+            border-color: var(--aurora-green);
+        }
+
+        .ai-btn, .secondary-btn {
+            border: none;
+            padding: 0 24px;
+            border-radius: 10px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease;
+            height: 52px;
+        }
+
+        .ai-btn {
+            background: linear-gradient(45deg, var(--aurora-green), var(--ice-blue));
+            color: #000;
+        }
+
+        .ai-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 255, 163, 0.4);
+        }
+
+        .secondary-btn {
+            background: rgba(255,255,255,0.06);
+            color: var(--text-main);
+            border: 1px solid var(--glass-border);
+        }
+
+        .secondary-btn:hover {
+            opacity: 0.9;
+        }
+
+        .quick-prompts {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 12px;
+        }
+
+        .quick-prompt {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid var(--glass-border);
+            color: var(--text-muted);
+            padding: 8px 12px;
+            border-radius: 999px;
+            font-size: 0.88rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .quick-prompt:hover {
+            color: var(--text-main);
+            border-color: var(--ice-blue);
+        }
+
+        .ai-response {
+            margin-top: 20px;
+            color: var(--text-main);
+            font-size: 0.97rem;
+            display: block;
+            min-height: 80px;
+            background: rgba(255,255,255,0.04);
+            border: 1px solid var(--glass-border);
+            border-radius: 14px;
+            padding: 18px;
+            overflow-wrap: break-word;
+        }
+
+        .ai-response.empty {
+            color: var(--text-muted);
+        }
+
+        .ai-response h1,
+        .ai-response h2,
+        .ai-response h3,
+        .ai-response h4 {
+            margin: 16px 0 10px;
+            color: var(--text-main);
+        }
+
+        .ai-response p {
+            margin: 10px 0;
+            color: var(--text-main);
+        }
+
+        .ai-response ul,
+        .ai-response ol {
+            margin: 10px 0 10px 24px;
+        }
+
+        .ai-response li {
+            margin: 6px 0;
+        }
+
+        .ai-response strong {
+            color: #ffffff;
+        }
+
+        .ai-response code {
+            background: rgba(255,255,255,0.08);
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+
+        .response-status {
+            margin-top: 12px;
+            color: var(--text-muted);
+            font-size: 0.92rem;
+        }
+
+        .section-title {
+            text-align: center;
+            font-size: 2.4rem;
+            margin: 60px 0 40px 0;
+        }
+
+        .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 30px;
+            padding: 0 5%;
+            margin-bottom: 80px;
+        }
+
+        .card {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 15px;
+            overflow: hidden;
+            transition: transform 0.3s ease, border-color 0.3s ease;
+            cursor: pointer;
+        }
+
+        .card:hover {
+            transform: translateY(-10px);
+            border-color: var(--ice-blue);
+        }
+
+        .card-img {
+            width: 100%;
+            height: 200px;
+            background-color: #1a202c;
+            object-fit: cover;
+        }
+
+        .card-content {
+            padding: 20px;
+        }
+
+        .card-title {
+            font-size: 1.15rem;
+            margin-bottom: 10px;
+            color: var(--aurora-green);
+        }
+
+        .card-desc {
+            font-size: 0.92rem;
+            color: var(--text-muted);
+        }
+
+        .footer-note {
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 0.92rem;
+            padding: 0 20px 50px;
+        }
+
+        @media (max-width: 768px) {
+            .hero h1 {
+                font-size: 2.5rem;
+            }
+
+            .nav-links {
+                display: none;
+            }
+
+            .ai-input-wrapper {
+                flex-direction: column;
+            }
+
+            .ai-btn,
+            .secondary-btn {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="ambient-light"></div>
+    <div class="ambient-light-2"></div>
+
+    <nav>
+        <div class="logo">Data Bridge</div>
+        <div class="nav-links">
+            <a href="#">Home</a>
+            <a href="#">Aurora Routes</a>
+            <a href="#">Finland Trips</a>
+            <a href="#">AI Planner</a>
+        </div>
+    </nav>
+
+    <header class="hero">
+        <h1>Explore the Nordic North</h1>
+        <p>
+            Let Data Bridge help you plan realistic trips to Finland and the Nordic region.
+            Ask for a short Helsinki break, a Lapland journey, or a family-friendly Finland itinerary.
+        </p>
+
+        <div class="hero-badges">
+            <div class="hero-badge">Local AI Model</div>
+            <div class="hero-badge">Streaming Responses</div>
+            <div class="hero-badge">Finland-Focused Route Templates</div>
+        </div>
+    </header>
+
+    <section class="ai-container">
+        <div class="ai-header">
+            <div class="ai-header-left">
+                <div class="ai-status-dot"></div>
+                <span>Data Bridge is ready</span>
+            </div>
+            <div class="ai-subtitle">Local MVP demo with real-time streaming output</div>
+        </div>
+
+        <div class="ai-input-wrapper">
+            <input
+                type="text"
+                class="ai-input"
+                id="userInput"
+                placeholder="Example: Plan a 7-day Finland and Lapland itinerary for first-time visitors."
+            >
+            <button class="ai-btn" id="generateBtn">Generate Plan</button>
+            <button class="secondary-btn" id="clearBtn">Clear</button>
+        </div>
+
+        <div class="quick-prompts">
+            <div class="quick-prompt" data-value="Hello">Hello</div>
+            <div class="quick-prompt" data-value="Plan a 3-day Helsinki trip for a couple.">3-day Helsinki</div>
+            <div class="quick-prompt" data-value="Give me a 7-day Finland and Lapland itinerary.">7-day Finland</div>
+            <div class="quick-prompt" data-value="Plan a 15-day Finland trip from China in late April for a family with one child.">15-day family trip</div>
+        </div>
+
+        <div class="response-status" id="statusText">Ready.</div>
+        <div id="aiResponse" class="ai-response empty">Your travel answer will appear here.</div>
+    </section>
+
+    <h2 class="section-title">Popular Inspirations</h2>
+
+    <section class="cards-grid">
+        <div class="card">
+            <img src="https://images.unsplash.com/photo-1548188500-ab08449b26d7?q=80&w=1728&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D" alt="Helsinki city waterfront" class="card-img">
+            <div class="card-content">
+                <h3 class="card-title">Helsinki City Break</h3>
+                <p class="card-desc">A short, elegant city route with landmarks, architecture, local food, and seaside atmosphere.</p>
+            </div>
+        </div>
+
+        <div class="card">
+            <img src="https://images.unsplash.com/photo-1594279761639-cb1787798b52?q=80&w=1160&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D" alt="Lapland northern lights" class="card-img">
+            <div class="card-content">
+                <h3 class="card-title">Finland & Lapland Highlights</h3>
+                <p class="card-desc">A balanced first-time itinerary that combines Helsinki, Turku, and the Arctic north.</p>
+            </div>
+        </div>
+
+        <div class="card">
+            <img src="https://images.unsplash.com/photo-1528155124528-06c125d81e89?q=80&w=689&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D" alt="Finnish coast and family journey atmosphere" class="card-img">
+            <div class="card-content">
+                <h3 class="card-title">Long-Haul Family Journey</h3>
+                <p class="card-desc">A deeper Finland-focused route for families and long-distance travelers who want more than quick highlights.</p>
+            </div>
+        </div>
+    </section>
+
+    <div class="footer-note">
+        Data Bridge uses a local Ollama model and route templates to generate practical Nordic travel suggestions.
+    </div>
+
+    <!-- Markdown renderer -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
+    <script>
+        const userInput = document.getElementById("userInput");
+        const generateBtn = document.getElementById("generateBtn");
+        const clearBtn = document.getElementById("clearBtn");
+        const aiResponse = document.getElementById("aiResponse");
+        const statusText = document.getElementById("statusText");
+        const quickPrompts = document.querySelectorAll(".quick-prompt");
+
+        quickPrompts.forEach(item => {
+            item.addEventListener("click", function () {
+                userInput.value = this.dataset.value;
+                userInput.focus();
+            });
+        });
+
+        clearBtn.addEventListener("click", function () {
+            userInput.value = "";
+            aiResponse.classList.add("empty");
+            aiResponse.innerHTML = "Your travel answer will appear here.";
+            statusText.textContent = "Ready.";
+        });
+
+        generateBtn.addEventListener("click", async function () {
+            const input = userInput.value.trim();
+
+            if (!input) {
+                alert("Please enter your travel question first.");
+                return;
+            }
+
+            aiResponse.classList.remove("empty");
+            aiResponse.innerHTML = "";
+            statusText.textContent = "Data Bridge is responding...";
+
+            try {
+                const response = await fetch("/generate_stream", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({ input: input })
+                });
+
+                if (!response.ok) {
+                    aiResponse.innerHTML = "Request failed with HTTP status " + response.status;
+                    statusText.textContent = "Error.";
+                    return;
+                }
+
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder();
+                let fullText = "";
+
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) {
+                        break;
+                    }
+
+                    const chunk = decoder.decode(value, { stream: true });
+                    fullText += chunk;
+
+                    aiResponse.innerHTML = marked.parse(fullText);
+                }
+
+                statusText.textContent = "Done.";
+            } catch (error) {
+                aiResponse.innerHTML = "Request failed: " + error;
+                statusText.textContent = "Error.";
+            }
+        });
+    </script>
+</body>
+</html>
