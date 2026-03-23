@@ -13,133 +13,347 @@ You are Nordic Travel AI, a professional travel assistant for Finland and the No
 Identity rules:
 - Never say you are Qwen, a language model, or an Ollama model.
 - Always present yourself as Nordic Travel AI.
-- If the user greets you, briefly introduce yourself as a Nordic travel planning assistant.
+- If the user greets you, briefly introduce yourself as Nordic Travel AI.
 
-Response rules:
-- Write in clear, natural English.
-- Be practical, concise, and helpful.
-- Do not generate a travel itinerary unless the user is clearly asking for travel planning.
-- If the user asks for a travel route or itinerary, use the provided route template if available.
-- Keep answers short to medium length unless the user asks for more detail.
+Business rules:
+- This MVP is package-based.
+- You must only use the package facts provided in the prompt.
+- You may explain, compare, recommend, summarize, and personalize the wording.
+- You must NOT change package names, prices, day counts, route structure, destination countries, highlights, or optional upgrades.
+- You must NOT say that you cannot generate travel itineraries or packages.
+- If the user asks a package-related question, answer directly and confidently using the package information.
+- If the user asks for a custom route, explain that the current MVP focuses on fixed packages, then suggest the closest package.
+
+Writing style:
+- Clear, natural, professional English
+- Helpful and concise
+- Medium-length answers
+- Use markdown headings and bullet points when useful
 """.strip()
 
-ROUTE_3_DAY_HELSINKI = """
-Route name: 3-Day Helsinki City Break
+PACKAGE_1 = """
+Package 1 — Aurora Classic Finland
+Origin market: Pakistan → Finland
+Trip length: 10 days
+Price: €5,000 / person
+Flights: not included
 
-Best for:
-- First-time visitors
-- Couples or small families
-- Short urban trip
+Route structure:
+- 3 days Helsinki
+- 7 days Rovaniemi / Lapland
 
-Plan:
-Day 1: Senate Square, Helsinki Cathedral, Market Square, Esplanadi, Finnish dinner
-Day 2: Suomenlinna, Design District, local café, optional evening sauna
-Day 3: Temppeliaukio Church, Oodi Library or museum, free time, optional Porvoo
+Highlights:
+- Tuomiokirkko
+- Suomenlinna
+- Santa Claus Village
+- multiple aurora nights
+- snow activities bundle
 
-Route logic:
-A compact Helsinki introduction with culture, landmarks, and local atmosphere.
+Includes:
+- accommodation
+- key transfers
+- core experiences
+- basic customer support
+
+Optional upgrades:
+- private aurora chase
+- igloo night
+- halal dining plan
+- eSIM
 """.strip()
 
-ROUTE_7_DAY_FINLAND = """
-Route name: 7-Day Finland and Lapland Highlights
+PACKAGE_2 = """
+Package 2 — Nordic Aurora Deep
+Origin market: China → Finland + Norway
+Trip length: 14 days
+Price: €6,000 / person
+Flights: not included
 
-Best for:
-- First-time Finland visitors
-- Travelers who want both city and northern experience
+Route structure:
+- Helsinki
+- Turku
+- Rovaniemi
+- Tromsø
 
-Plan:
-Day 1: Arrival in Helsinki
-Day 2: Helsinki highlights
-Day 3: Turku cultural visit
-Day 4: Travel to Rovaniemi
-Day 5: Santa Claus Village and Lapland highlights
-Day 6: Nature or seasonal activities
-Day 7: Return and departure
+Highlights:
+- forest snow scenery
+- coastal aurora setting
+- richer photography opportunities
+- richer experiences
 
-Route logic:
-Balanced first Finland trip with Helsinki, Turku, and Lapland.
+Includes:
+- accommodation
+- key transfers
+- core experiences
+- basic customer support
+
+Optional upgrades:
+- private aurora chase
+- igloo night
+- dining support plan
+- eSIM
 """.strip()
 
-ROUTE_15_DAY_NORDIC = """
-Route name: 15-Day Finland-Focused Nordic Discovery Journey
+PACKAGE_3 = """
+Package 3 — Winter Starter
+Trip length: 7 days
+Price: €3,500 / person
+Flights: not included
 
-Best for:
-- Long-haul travelers from Asia
-- Families or couples
-- People who want a deeper trip, not only quick highlights
+Route structure:
+- Helsinki
+- Lapland
 
-Plan:
-Day 1-3: Helsinki
-Day 4: Porvoo
-Day 5-7: Turku and nearby coastal atmosphere
-Day 8-9: Tampere
-Day 10-13: Rovaniemi and Lapland
-Day 14: Return south
-Day 15: Departure
+Designed for:
+- first-time Nordics travelers
 
-Route logic:
-Longer Finland journey with regional variety, city culture, and northern nature.
+Positioning:
+- shorter loop
+- fewer moves
+- entry winter product
+""".strip()
+
+ALL_PACKAGES = f"""
+{PACKAGE_1}
+
+{PACKAGE_2}
+
+{PACKAGE_3}
 """.strip()
 
 
-def is_travel_request(user_input: str) -> bool:
-    text = user_input.lower()
-    keywords = [
-        "trip", "travel", "itinerary", "route", "plan", "vacation", "holiday",
-        "helsinki", "finland", "nordic", "lapland", "rovaniemi", "days"
+def normalize(text: str) -> str:
+    return text.lower().strip()
+
+
+def detect_intent(user_input: str):
+    t = normalize(user_input)
+
+    # greeting
+    if t in {"hello", "hi", "hey", "hello!", "hi!", "hey!", "introduce yourself", "who are you"}:
+        return "greeting", ""
+
+    # explain / direct package match
+    if "package 1" in t or "aurora classic" in t or "classic finland aurora" in t or ("pakistan" in t and "finland" in t):
+        if "compare" not in t:
+            return "explain_package_1", PACKAGE_1
+
+    if "package 2" in t or "nordic aurora deep" in t or "finland and norway" in t or "finland + norway" in t or "tromsø" in t or "tromso" in t:
+        if "compare" not in t:
+            return "explain_package_2", PACKAGE_2
+
+    if "package 3" in t or "winter starter" in t or "shorter and easier winter trip" in t or "fewer moves" in t:
+        if "compare" not in t:
+            return "explain_package_3", PACKAGE_3
+
+    # compare
+    if "compare" in t and "package 1" in t and "package 2" in t:
+        return "compare_1_2", f"{PACKAGE_1}\n\n{PACKAGE_2}"
+
+    if "compare" in t and "package 1" in t and "package 3" in t:
+        return "compare_1_3", f"{PACKAGE_1}\n\n{PACKAGE_3}"
+
+    if "compare" in t and "package 2" in t and "package 3" in t:
+        return "compare_2_3", f"{PACKAGE_2}\n\n{PACKAGE_3}"
+
+    # recommendation
+    if "first-time" in t or "first time" in t or "first-time travelers" in t:
+        return "recommend_first_time", ALL_PACKAGES
+
+    if "family" in t and "china" in t:
+        return "recommend_family_china", ALL_PACKAGES
+
+    if "pakistan" in t:
+        return "recommend_pakistan", ALL_PACKAGES
+
+    if "classic finland aurora" in t:
+        return "explain_package_1", PACKAGE_1
+
+    if "finland and norway winter journey" in t or "deeper finland and norway" in t:
+        return "explain_package_2", PACKAGE_2
+
+    if "shorter and easier winter trip" in t:
+        return "explain_package_3", PACKAGE_3
+
+    # generic package/travel question
+    package_keywords = [
+        "package", "trip", "travel", "plan", "route", "aurora",
+        "finland", "norway", "lapland", "helsinki", "tromsø", "tromso"
     ]
-    return any(word in text for word in keywords)
+    if any(word in t for word in package_keywords):
+        return "general_package_question", ALL_PACKAGES
+
+    return "general_non_package", ""
 
 
-def choose_route_template(user_input: str) -> str:
-    text = user_input.lower()
+def build_user_prompt(user_input: str, intent: str, facts: str) -> str:
+    if intent == "greeting":
+        return f"""
+User message:
+{user_input}
 
-    # 非旅行内容，不用模板
-    if not is_travel_request(text):
-        return ""
+Task:
+Reply briefly as Nordic Travel AI.
+Introduce yourself as a package-based Nordic winter travel assistant.
+Do not mention any package unless the user asks.
+""".strip()
 
-    # 3天赫尔辛基
-    if (
-        "3-day" in text or "3 day" in text or "3 days" in text or "3days" in text
-        or ("helsinki" in text and ("short" in text or "city break" in text or "3" in text))
-    ):
-        return ROUTE_3_DAY_HELSINKI
-
-    # 7天芬兰 / 拉普兰
-    if (
-        "7-day" in text or "7 day" in text or "7 days" in text or "7days" in text
-        or "lapland" in text or "rovaniemi" in text
-    ):
-        return ROUTE_7_DAY_FINLAND
-
-    # 15天 / 家庭 / 从中国出发 / 更长行程
-    if (
-        "15-day" in text or "15 day" in text or "15 days" in text or "15days" in text
-        or "family" in text or "from china" in text or "late april" in text
-    ):
-        return ROUTE_15_DAY_NORDIC
-
-    # 一般旅行问题但未明确天数时，不强行塞 15 天模板
-    return ""
-
-
-def build_user_message(user_input: str, route_template: str) -> str:
-    if not route_template:
-        return user_input
-
-    return f"""
+    if intent.startswith("explain_package_"):
+        return f"""
 User request:
 {user_input}
 
-Reference route template:
-{route_template}
+Selected task:
+Explain this package clearly and attractively.
+
+Package facts:
+{facts}
+
+Rules:
+- Keep all facts unchanged.
+- Present the package as a real travel product.
+- Include who it is suitable for.
+- Use markdown headings and bullet points.
+""".strip()
+
+    if intent.startswith("compare_"):
+        return f"""
+User request:
+{user_input}
+
+Selected task:
+Compare these packages clearly.
+
+Package facts:
+{facts}
+
+Rules:
+- Keep all facts unchanged.
+- Compare route structure, duration, price, and travel style.
+- End with a short recommendation on when each package fits better.
+- Use markdown headings and bullet points.
+""".strip()
+
+    if intent == "recommend_first_time":
+        return f"""
+User request:
+{user_input}
+
+Selected task:
+Recommend the best package for first-time Nordics travelers.
+
+Available package facts:
+{facts}
+
+Rules:
+- Keep all facts unchanged.
+- Recommend one package first, then optionally mention one alternative.
+- Explain the recommendation clearly.
+- Use markdown headings and bullet points.
+""".strip()
+
+    if intent == "recommend_family_china":
+        return f"""
+User request:
+{user_input}
+
+Selected task:
+Recommend the best package for a family from China.
+
+Available package facts:
+{facts}
+
+Rules:
+- Keep all facts unchanged.
+- Recommend one package first, then optionally mention one alternative.
+- Explain the recommendation clearly.
+- Use markdown headings and bullet points.
+""".strip()
+
+    if intent == "recommend_pakistan":
+        return f"""
+User request:
+{user_input}
+
+Selected task:
+Recommend the most relevant package for a traveler from Pakistan.
+
+Available package facts:
+{facts}
+
+Rules:
+- Keep all facts unchanged.
+- Recommend the most relevant package first.
+- Explain why it fits.
+- Use markdown headings and bullet points.
+""".strip()
+
+    if intent == "general_package_question":
+        return f"""
+User request:
+{user_input}
+
+Selected task:
+Answer this package-related question using the fixed package facts below.
+
+Available package facts:
+{facts}
+
+Rules:
+- Keep all facts unchanged.
+- If the user asks for a recommendation, recommend the closest package.
+- If the user asks for a custom route, say that the current MVP is package-based and suggest the closest package.
+- Use markdown when helpful.
+""".strip()
+
+    return f"""
+User message:
+{user_input}
 
 Task:
-Answer as Nordic Travel AI.
-If the user asked for an itinerary, provide a complete itinerary.
-Do not stop at Day 1 or Day 2.
-Keep the answer practical and concise.
+Reply briefly as Nordic Travel AI.
+If the question is not package-related, explain that this MVP focuses on fixed Nordic winter travel packages.
+Then suggest asking about the available travel packages.
 """.strip()
+
+
+def call_ollama_stream(user_prompt: str):
+    payload = {
+        "model": MODEL_NAME,
+        "stream": True,
+        "think": False,
+        "keep_alive": "15m",
+        "messages": [
+            {"role": "system", "content": SYSTEM_PROMPT},
+            {"role": "user", "content": user_prompt}
+        ],
+        "options": {
+            "temperature": 0.2,
+            "num_predict": 1024
+        }
+    }
+
+    with requests.post(OLLAMA_CHAT_URL, json=payload, stream=True, timeout=180) as response:
+        response.raise_for_status()
+
+        for line in response.iter_lines(decode_unicode=True):
+            if not line:
+                continue
+
+            try:
+                obj = json.loads(line)
+            except json.JSONDecodeError:
+                continue
+
+            message = obj.get("message", {})
+            content = message.get("content", "")
+            done = obj.get("done", False)
+
+            if content:
+                yield content
+
+            if done:
+                break
 
 
 @app.route("/")
@@ -155,69 +369,8 @@ def test():
     })
 
 
-@app.route("/generate", methods=["POST"])
-def generate():
-    """
-    非流式：保留给简单测试或备用
-    """
-    try:
-        data = request.get_json(silent=True)
-        if not data:
-            return jsonify({"success": False, "answer": "Error: request body is empty."}), 400
-
-        user_input = str(data.get("input", "")).strip()
-        if not user_input:
-            return jsonify({"success": False, "answer": "Error: input is empty."}), 400
-
-        route_template = choose_route_template(user_input)
-        user_message = build_user_message(user_input, route_template)
-
-        payload = {
-            "model": MODEL_NAME,
-            "stream": False,
-            "think": False,
-            "keep_alive": "15m",
-            "messages": [
-                {"role": "system", "content": SYSTEM_PROMPT},
-                {"role": "user", "content": user_message}
-            ],
-            "options": {
-                "temperature": 0.4,
-                "num_predict": 420
-            }
-        }
-
-        response = requests.post(OLLAMA_CHAT_URL, json=payload, timeout=180)
-        if response.status_code != 200:
-            return jsonify({
-                "success": False,
-                "answer": f"Ollama HTTP error {response.status_code}: {response.text}"
-            }), 500
-
-        result = response.json()
-        answer = result.get("message", {}).get("content", "").strip()
-
-        if not answer:
-            return jsonify({
-                "success": False,
-                "answer": f"Model returned empty response. Full result: {result}"
-            }), 500
-
-        return jsonify({"success": True, "answer": answer})
-
-    except requests.exceptions.ConnectionError:
-        return jsonify({"success": False, "answer": "Cannot connect to Ollama. Make sure Ollama is running."}), 500
-    except requests.exceptions.Timeout:
-        return jsonify({"success": False, "answer": "Ollama request timed out."}), 500
-    except Exception as e:
-        return jsonify({"success": False, "answer": f"Unexpected server error: {str(e)}"}), 500
-
-
 @app.route("/generate_stream", methods=["POST"])
 def generate_stream():
-    """
-    流式输出版本
-    """
     data = request.get_json(silent=True)
     if not data:
         return Response("Error: request body is empty.", mimetype="text/plain")
@@ -226,48 +379,13 @@ def generate_stream():
     if not user_input:
         return Response("Error: input is empty.", mimetype="text/plain")
 
-    route_template = choose_route_template(user_input)
-    user_message = build_user_message(user_input, route_template)
-
-    payload = {
-        "model": MODEL_NAME,
-        "stream": True,
-        "think": False,
-        "keep_alive": "15m",
-        "messages": [
-            {"role": "system", "content": SYSTEM_PROMPT},
-            {"role": "user", "content": user_message}
-        ],
-        "options": {
-            "temperature": 0.4,
-            "num_predict": 420
-        }
-    }
+    intent, facts = detect_intent(user_input)
+    user_prompt = build_user_prompt(user_input, intent, facts)
 
     def generate_chunks():
         try:
-            with requests.post(OLLAMA_CHAT_URL, json=payload, stream=True, timeout=180) as response:
-                response.raise_for_status()
-
-                for line in response.iter_lines(decode_unicode=True):
-                    if not line:
-                        continue
-
-                    try:
-                        obj = json.loads(line)
-                    except json.JSONDecodeError:
-                        continue
-
-                    message = obj.get("message", {})
-                    content = message.get("content", "")
-                    done = obj.get("done", False)
-
-                    if content:
-                        yield content
-
-                    if done:
-                        break
-
+            for chunk in call_ollama_stream(user_prompt):
+                yield chunk
         except requests.exceptions.ConnectionError:
             yield "\n\n[Error: Cannot connect to Ollama. Make sure Ollama is running.]"
         except requests.exceptions.Timeout:
