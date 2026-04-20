@@ -1,5 +1,7 @@
 # Nordic Travel AI
 
+
+
 Nordic Travel AI is a lightweight AI-powered travel planning web application focused on Finland and Nordic destinations.
 It demonstrates how a local Large Language Model (LLM) can be integrated into a simple web system to generate realistic travel itineraries in real time.
 
